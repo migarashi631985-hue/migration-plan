@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訪問歯科診療 サブカルテ</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #000;
+  }
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+  @media print {
+    body { margin: 0; }
+    .page { page-break-after: always; box-shadow: none; border: none; }
+  }
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 8mm;
+    background: #fff;
+    border: 1px solid #ccc;
+  }
+
+  /* ヘッダー */
+  .header {
+    text-align: center;
+    margin-bottom: 6px;
+    border-bottom: 3px double #333;
+    padding-bottom: 4px;
+  }
+  .header h1 {
+    font-size: 18px;
+    letter-spacing: 4px;
+  }
+  .header .subtitle {
+    font-size: 10px;
+    color: #555;
+    margin-top: 2px;
+  }
+
+  /* テーブル共通 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 3px 5px;
+    vertical-align: top;
+    font-size: 11px;
+  }
+  th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: left;
+    width: 85px;
+  }
+
+  /* セクション見出し */
+  .section-title {
+    background-color: #4a6fa5;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    padding: 3px;
+    font-size: 12px;
+  }
+  .section-title-green {
+    background-color: #5a8a5a;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    padding: 3px;
+    font-size: 12px;
+  }
+
+  /* 患者情報バー */
+  .patient-bar {
+    display: flex;
+    border: 1px solid #333;
+    margin-bottom: 5px;
+  }
+  .patient-bar > div {
+    padding: 3px 8px;
+    border-right: 1px solid #333;
+    font-size: 11px;
+  }
+  .patient-bar > div:last-child {
+    border-right: none;
+  }
+  .patient-bar .label {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .patient-bar .value {
+    min-width: 80px;
+  }
+  .patient-bar .name-value {
+    min-width: 150px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  /* 訪問記録テーブル */
+  .visit-record {
+    margin-bottom: 8px;
+  }
+  .visit-record th {
+    width: 80px;
+  }
+
+  /* 歯式（小型） */
+  .teeth-mini {
+    margin: 2px auto;
+  }
+  .teeth-mini table {
+    margin: 0 auto;
+    width: 80%;
+  }
+  .teeth-mini td {
+    text-align: center;
+    width: 22px;
+    height: 18px;
+    font-size: 9px;
+    padding: 1px;
+  }
+  .teeth-mini .divider-row td {
+    border-top: 2px solid #333;
+    border-bottom: 2px solid #333;
+    height: 2px;
+    padding: 0;
+  }
+  .teeth-mini .label-cell {
+    border: none;
+    font-weight: bold;
+    font-size: 9px;
+    width: 20px;
+  }
+
+  /* バイタルサイン */
+  .vital-row td {
+    text-align: center;
+    font-size: 10px;
+  }
+
+  /* 経過記録テーブル */
+  .progress-table th {
+    width: 65px;
+    font-size: 10px;
+  }
+  .progress-table td {
+    font-size: 10px;
+  }
+
+  /* 回数ラベル */
+  .visit-number {
+    background-color: #e8e8e8;
+    font-weight: bold;
+    text-align: center;
+    font-size: 11px;
+    padding: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <h1>訪問歯科診療 サブカルテ</h1>
+    <div class="subtitle">Sub-Chart for Home Visit Dental Care</div>
+  </div>
+
+  <!-- 患者識別情報バー -->
+  <div class="patient-bar">
+    <div class="label">管理番号</div>
+    <div class="value"></div>
+    <div class="label">患者氏名</div>
+    <div class="name-value"></div>
+    <div class="label">生年月日</div>
+    <div class="value">　　年　月　日</div>
+    <div class="label">年齢</div>
+    <div class="value">　歳</div>
+    <div class="label">訪問先</div>
+    <div class="value" style="flex:1;"></div>
+  </div>
+
+  <!-- 注意事項バー -->
+  <table>
+    <tr>
+      <th style="width:80px; background:#ffe0e0; color:#c00;">注意事項</th>
+      <td style="background:#fff5f5; font-size:10px;">
+        アレルギー：　　　　　　　　　｜ 感染症：　　　　　　　　　｜ 抗凝固薬：□有 □無　｜ BP製剤：□有 □無　｜ その他：
+      </td>
+    </tr>
+  </table>
+
+  <!-- 第1回訪問記録 -->
+  <table class="visit-record">
+    <tr>
+      <td colspan="8" class="section-title">第1回 訪問記録</td>
+    </tr>
+    <tr>
+      <th>訪問日時</th>
+      <td colspan="3">　　年　　月　　日（　）　　：　　～　　：　　</td>
+      <th>担当歯科医師</th>
+      <td></td>
+      <th>担当衛生士</th>
+      <td></td>
+    </tr>
+    <tr>
+      <th>バイタル</th>
+      <td colspan="7" class="vital-row" style="font-size:10px;">
+        体温：　　℃　｜　血圧：　　/　　mmHg　｜　脈拍：　　回/分　｜　SpO2：　　%　｜　全身状態：□良好 □注意 □不良
+      </td>
+    </tr>
+    <tr>
+      <th>主訴・所見</th>
+      <td colspan="7" style="height: 30px;"></td>
+    </tr>
+    <tr>
+      <td colspan="4" style="padding:0;">
+        <!-- 処置歯式 -->
+        <div class="teeth-mini">
+          <table>
+            <tr>
+              <td class="label-cell">R</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">L</td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr class="divider-row">
+              <td class="label-cell"></td>
+              <td colspan="8"></td><td colspan="8" style="border-left:2px solid #333;"></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">R</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">L</td>
+            </tr>
+          </table>
+        </div>
+      </td>
+      <td colspan="4" style="vertical-align:top;">
+        <table style="margin:0; border:none;">
+          <tr>
+            <th style="font-size:10px; width:70px;">処置部位</th>
+            <td style="font-size:10px;"></td>
+          </tr>
+          <tr>
+            <th style="font-size:10px;">病名</th>
+            <td style="font-size:10px;"></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <th>処置内容</th>
+      <td colspan="7" style="height: 35px; font-size:10px;">
+        □ 検査　□ う蝕治療　□ 抜歯　□ 歯周治療　□ 義歯作製　□ 義歯調整　□ 義歯修理<br>
+        □ 口腔ケア　□ PMTC　□ 摂食嚥下指導　□ TBI　□ その他（　　　　　　　　　　　）<br>
+        詳細：
+      </td>
+    </tr>
+    <tr>
+      <th>使用材料</th>
+      <td colspan="3" style="height: 18px; font-size:10px;"></td>
+      <th>使用薬剤</th>
+      <td colspan="3" style="font-size:10px;"></td>
+    </tr>
+    <tr>
+      <th>患者指導</th>
+      <td colspan="7" style="height: 25px; font-size:10px;"></td>
+    </tr>
+    <tr>
+      <th>次回予定</th>
+      <td colspan="3">　　月　　日（　）　　：　　～ 予定内容：</td>
+      <th>署名</th>
+      <td colspan="3">歯科医師：　　　　　　　衛生士：</td>
+    </tr>
+  </table>
+
+  <!-- 第2回訪問記録 -->
+  <table class="visit-record">
+    <tr>
+      <td colspan="8" class="section-title-green">第2回 訪問記録</td>
+    </tr>
+    <tr>
+      <th>訪問日時</th>
+      <td colspan="3">　　年　　月　　日（　）　　：　　～　　：　　</td>
+      <th>担当歯科医師</th>
+      <td></td>
+      <th>担当衛生士</th>
+      <td></td>
+    </tr>
+    <tr>
+      <th>バイタル</th>
+      <td colspan="7" class="vital-row" style="font-size:10px;">
+        体温：　　℃　｜　血圧：　　/　　mmHg　｜　脈拍：　　回/分　｜　SpO2：　　%　｜　全身状態：□良好 □注意 □不良
+      </td>
+    </tr>
+    <tr>
+      <th>主訴・所見</th>
+      <td colspan="7" style="height: 30px;"></td>
+    </tr>
+    <tr>
+      <td colspan="4" style="padding:0;">
+        <div class="teeth-mini">
+          <table>
+            <tr>
+              <td class="label-cell">R</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">L</td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr class="divider-row">
+              <td class="label-cell"></td>
+              <td colspan="8"></td><td colspan="8" style="border-left:2px solid #333;"></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">R</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">L</td>
+            </tr>
+          </table>
+        </div>
+      </td>
+      <td colspan="4" style="vertical-align:top;">
+        <table style="margin:0; border:none;">
+          <tr>
+            <th style="font-size:10px; width:70px;">処置部位</th>
+            <td style="font-size:10px;"></td>
+          </tr>
+          <tr>
+            <th style="font-size:10px;">病名</th>
+            <td style="font-size:10px;"></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <th>処置内容</th>
+      <td colspan="7" style="height: 35px; font-size:10px;">
+        □ 検査　□ う蝕治療　□ 抜歯　□ 歯周治療　□ 義歯作製　□ 義歯調整　□ 義歯修理<br>
+        □ 口腔ケア　□ PMTC　□ 摂食嚥下指導　□ TBI　□ その他（　　　　　　　　　　　）<br>
+        詳細：
+      </td>
+    </tr>
+    <tr>
+      <th>使用材料</th>
+      <td colspan="3" style="height: 18px; font-size:10px;"></td>
+      <th>使用薬剤</th>
+      <td colspan="3" style="font-size:10px;"></td>
+    </tr>
+    <tr>
+      <th>患者指導</th>
+      <td colspan="7" style="height: 25px; font-size:10px;"></td>
+    </tr>
+    <tr>
+      <th>次回予定</th>
+      <td colspan="3">　　月　　日（　）　　：　　～ 予定内容：</td>
+      <th>署名</th>
+      <td colspan="3">歯科医師：　　　　　　　衛生士：</td>
+    </tr>
+  </table>
+
+  <!-- 第3回訪問記録 -->
+  <table class="visit-record">
+    <tr>
+      <td colspan="8" class="section-title">第3回 訪問記録</td>
+    </tr>
+    <tr>
+      <th>訪問日時</th>
+      <td colspan="3">　　年　　月　　日（　）　　：　　～　　：　　</td>
+      <th>担当歯科医師</th>
+      <td></td>
+      <th>担当衛生士</th>
+      <td></td>
+    </tr>
+    <tr>
+      <th>バイタル</th>
+      <td colspan="7" class="vital-row" style="font-size:10px;">
+        体温：　　℃　｜　血圧：　　/　　mmHg　｜　脈拍：　　回/分　｜　SpO2：　　%　｜　全身状態：□良好 □注意 □不良
+      </td>
+    </tr>
+    <tr>
+      <th>主訴・所見</th>
+      <td colspan="7" style="height: 30px;"></td>
+    </tr>
+    <tr>
+      <td colspan="4" style="padding:0;">
+        <div class="teeth-mini">
+          <table>
+            <tr>
+              <td class="label-cell">R</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">L</td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr class="divider-row">
+              <td class="label-cell"></td>
+              <td colspan="8"></td><td colspan="8" style="border-left:2px solid #333;"></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">R</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">L</td>
+            </tr>
+          </table>
+        </div>
+      </td>
+      <td colspan="4" style="vertical-align:top;">
+        <table style="margin:0; border:none;">
+          <tr>
+            <th style="font-size:10px; width:70px;">処置部位</th>
+            <td style="font-size:10px;"></td>
+          </tr>
+          <tr>
+            <th style="font-size:10px;">病名</th>
+            <td style="font-size:10px;"></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <th>処置内容</th>
+      <td colspan="7" style="height: 35px; font-size:10px;">
+        □ 検査　□ う蝕治療　□ 抜歯　□ 歯周治療　□ 義歯作製　□ 義歯調整　□ 義歯修理<br>
+        □ 口腔ケア　□ PMTC　□ 摂食嚥下指導　□ TBI　□ その他（　　　　　　　　　　　）<br>
+        詳細：
+      </td>
+    </tr>
+    <tr>
+      <th>使用材料</th>
+      <td colspan="3" style="height: 18px; font-size:10px;"></td>
+      <th>使用薬剤</th>
+      <td colspan="3" style="font-size:10px;"></td>
+    </tr>
+    <tr>
+      <th>患者指導</th>
+      <td colspan="7" style="height: 25px; font-size:10px;"></td>
+    </tr>
+    <tr>
+      <th>次回予定</th>
+      <td colspan="3">　　月　　日（　）　　：　　～ 予定内容：</td>
+      <th>署名</th>
+      <td colspan="3">歯科医師：　　　　　　　衛生士：</td>
+    </tr>
+  </table>
+
+  <!-- 経過サマリー -->
+  <table>
+    <tr><td colspan="4" class="section-title">経過サマリー・申し送り事項</td></tr>
+    <tr>
+      <td colspan="4" style="height: 50px; font-size:10px;"></td>
+    </tr>
+  </table>
+
+</div>
+</body>
+</html>

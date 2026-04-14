@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訪問歯科診療 フェースシート</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #000;
+  }
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+  @media print {
+    body { margin: 0; }
+    .page { page-break-after: always; box-shadow: none; border: none; }
+  }
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 8mm;
+    background: #fff;
+    border: 1px solid #ccc;
+  }
+
+  /* ヘッダー */
+  .header {
+    text-align: center;
+    margin-bottom: 6px;
+    border-bottom: 3px double #333;
+    padding-bottom: 4px;
+  }
+  .header h1 {
+    font-size: 18px;
+    letter-spacing: 4px;
+  }
+  .header .subtitle {
+    font-size: 10px;
+    color: #555;
+    margin-top: 2px;
+  }
+
+  /* テーブル共通 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 6px;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 3px 5px;
+    vertical-align: top;
+    font-size: 11px;
+  }
+  th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: left;
+    width: 100px;
+  }
+
+  /* セクション見出し */
+  .section-title {
+    background-color: #4a6fa5;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    padding: 3px;
+    font-size: 12px;
+  }
+
+  /* 患者基本情報 */
+  .patient-basic th { width: 80px; }
+  .patient-basic td.name-cell {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .furigana {
+    font-size: 9px;
+    font-weight: normal;
+    color: #555;
+  }
+
+  /* 歯式図 */
+  .teeth-chart {
+    margin: 4px auto;
+    width: 100%;
+  }
+  .teeth-chart table {
+    margin: 0 auto;
+    width: 90%;
+  }
+  .teeth-chart td {
+    text-align: center;
+    width: 28px;
+    height: 24px;
+    font-size: 10px;
+    padding: 2px;
+  }
+  .teeth-chart .divider-row td {
+    border-top: 2px solid #333;
+    border-bottom: 2px solid #333;
+    height: 4px;
+    padding: 0;
+  }
+  .teeth-chart .label-cell {
+    border: none;
+    font-weight: bold;
+    font-size: 10px;
+    width: 30px;
+  }
+
+  /* 備考欄 */
+  td.notes-cell {
+    height: 50px;
+  }
+
+  /* 2カラムレイアウト */
+  .two-col {
+    display: flex;
+    gap: 0;
+  }
+  .two-col > table {
+    flex: 1;
+  }
+  .two-col > table:first-child {
+    margin-right: -1px;
+  }
+
+  /* ADL表 */
+  .adl-table th { width: 90px; }
+  .adl-table td { text-align: center; }
+
+  /* 作成日 */
+  .creation-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <h1>訪問歯科診療 フェースシート</h1>
+    <div class="subtitle">Face Sheet for Home Visit Dental Care</div>
+  </div>
+
+  <!-- 作成情報 -->
+  <div class="creation-info">
+    <span>作成日：　　　年　　月　　日</span>
+    <span>更新日：　　　年　　月　　日</span>
+    <span>管理番号：</span>
+  </div>
+
+  <!-- 患者基本情報 -->
+  <table class="patient-basic">
+    <tr>
+      <td colspan="8" class="section-title">患者基本情報</td>
+    </tr>
+    <tr>
+      <th>フリガナ</th>
+      <td colspan="3" style="height: 20px;"></td>
+      <th>生年月日</th>
+      <td>明・大・昭・平・令　　年　　月　　日</td>
+      <th>年齢</th>
+      <td style="width:50px;">　　歳</td>
+    </tr>
+    <tr>
+      <th>患者氏名</th>
+      <td colspan="3" class="name-cell" style="height: 30px;"></td>
+      <th>性別</th>
+      <td>男　・　女</td>
+      <th>血液型</th>
+      <td>A・B・O・AB　Rh(+・-)</td>
+    </tr>
+    <tr>
+      <th>住所</th>
+      <td colspan="7">〒　　　-　　　　</td>
+    </tr>
+    <tr>
+      <th>電話番号</th>
+      <td colspan="3">TEL：</td>
+      <th>携帯</th>
+      <td colspan="3"></td>
+    </tr>
+    <tr>
+      <th>訪問先</th>
+      <td colspan="7">□ 自宅　□ 施設（施設名：　　　　　　　　　　　　　）　□ 病院（病院名：　　　　　　　　　　　　　）</td>
+    </tr>
+  </table>
+
+  <!-- 保険情報 -->
+  <div class="two-col">
+    <table>
+      <tr><td colspan="4" class="section-title">医療保険情報</td></tr>
+      <tr>
+        <th>保険種別</th>
+        <td colspan="3">□ 社保　□ 国保　□ 後期高齢者　□ 生保　□ その他（　　）</td>
+      </tr>
+      <tr>
+        <th>保険者番号</th>
+        <td></td>
+        <th>記号・番号</th>
+        <td></td>
+      </tr>
+      <tr>
+        <th>負担割合</th>
+        <td colspan="3">□ 1割　□ 2割　□ 3割</td>
+      </tr>
+      <tr>
+        <th>公費負担</th>
+        <td colspan="3">□ なし　□ あり（　　　　　　　　　　）</td>
+      </tr>
+    </table>
+    <table>
+      <tr><td colspan="4" class="section-title">介護保険情報</td></tr>
+      <tr>
+        <th>被保険者番号</th>
+        <td colspan="3"></td>
+      </tr>
+      <tr>
+        <th>要介護度</th>
+        <td colspan="3">□ 要支援（1・2）　□ 要介護（1・2・3・4・5）　□ 非該当</td>
+      </tr>
+      <tr>
+        <th>認定有効期間</th>
+        <td colspan="3">　　年　月　日 ～　　年　月　日</td>
+      </tr>
+      <tr>
+        <th>ケアマネジャー</th>
+        <td>氏名：</td>
+        <th style="width:30px;">TEL</th>
+        <td></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 緊急連絡先・かかりつけ医 -->
+  <div class="two-col">
+    <table>
+      <tr><td colspan="4" class="section-title">緊急連絡先</td></tr>
+      <tr>
+        <th>氏名①</th>
+        <td></td>
+        <th>続柄</th>
+        <td></td>
+      </tr>
+      <tr>
+        <th>TEL</th>
+        <td colspan="3"></td>
+      </tr>
+      <tr>
+        <th>氏名②</th>
+        <td></td>
+        <th>続柄</th>
+        <td></td>
+      </tr>
+      <tr>
+        <th>TEL</th>
+        <td colspan="3"></td>
+      </tr>
+    </table>
+    <table>
+      <tr><td colspan="4" class="section-title">かかりつけ医情報</td></tr>
+      <tr>
+        <th>医療機関名</th>
+        <td colspan="3"></td>
+      </tr>
+      <tr>
+        <th>主治医</th>
+        <td></td>
+        <th>TEL</th>
+        <td></td>
+      </tr>
+      <tr>
+        <th>診療科</th>
+        <td colspan="3"></td>
+      </tr>
+      <tr>
+        <th>医療機関名②</th>
+        <td></td>
+        <th>TEL</th>
+        <td></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 既往歴・現病歴 -->
+  <table>
+    <tr><td colspan="6" class="section-title">既往歴・現病歴・服用薬</td></tr>
+    <tr>
+      <th>既往歴</th>
+      <td colspan="5" style="height: 35px;">
+        □ 高血圧　□ 糖尿病　□ 心疾患　□ 脳血管疾患　□ 呼吸器疾患　□ 肝疾患　□ 腎疾患　□ 骨粗鬆症<br>
+        □ 認知症　□ パーキンソン病　□ 関節リウマチ　□ がん（部位：　　　）　□ その他（　　　　　　　）
+      </td>
+    </tr>
+    <tr>
+      <th>現病歴</th>
+      <td colspan="5" style="height: 30px;"></td>
+    </tr>
+    <tr>
+      <th>服用薬</th>
+      <td colspan="5" style="height: 30px;">
+        ※お薬手帳コピー添付　□ 抗凝固薬　□ BP製剤　□ ステロイド　□ 免疫抑制剤　□ インスリン　□ その他
+      </td>
+    </tr>
+    <tr>
+      <th>アレルギー</th>
+      <td colspan="5">□ なし　□ あり（薬剤：　　　　　　食物：　　　　　　ラテックス：□　その他：　　　　　）</td>
+    </tr>
+    <tr>
+      <th>感染症</th>
+      <td colspan="5">□ なし　□ HBV　□ HCV　□ HIV　□ 梅毒　□ MRSA　□ 結核　□ その他（　　　　　）</td>
+    </tr>
+  </table>
+
+  <!-- ADL・全身状態 -->
+  <table class="adl-table">
+    <tr><td colspan="8" class="section-title">ADL・全身状態・コミュニケーション</td></tr>
+    <tr>
+      <th>移動</th>
+      <td>□ 自立　□ 杖　□ 歩行器　□ 車椅子　□ 寝たきり</td>
+      <th>食事</th>
+      <td>□ 自立　□ 一部介助　□ 全介助　□ 経管栄養</td>
+    </tr>
+    <tr>
+      <th>意思疎通</th>
+      <td>□ 良好　□ やや困難　□ 困難</td>
+      <th>認知機能</th>
+      <td>□ 正常　□ 軽度低下　□ 中等度低下　□ 重度低下</td>
+    </tr>
+    <tr>
+      <th>開口状態</th>
+      <td>□ 良好　□ やや制限あり　□ 開口困難</td>
+      <th>体位</th>
+      <td>□ 座位可　□ リクライニング　□ 臥位のみ</td>
+    </tr>
+    <tr>
+      <th>嚥下機能</th>
+      <td>□ 正常　□ やや低下　□ 嚥下障害あり</td>
+      <th>口腔ケア</th>
+      <td>□ 自立　□ 一部介助　□ 全介助</td>
+    </tr>
+  </table>
+
+  <!-- 口腔内状態・歯式 -->
+  <table>
+    <tr><td colspan="2" class="section-title">口腔内状態</td></tr>
+    <tr>
+      <td style="width: 55%;">
+        <!-- 歯式図 -->
+        <div class="teeth-chart">
+          <table>
+            <tr>
+              <td class="label-cell">右上</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">左上</td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr class="divider-row">
+              <td class="label-cell"></td>
+              <td colspan="8"></td><td colspan="8" style="border-left:2px solid #333;"></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell"></td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td style="border-left:2px solid #333;"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+              <td class="label-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">右下</td>
+              <td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td>
+              <td style="border-left:2px solid #333;">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+              <td class="label-cell">左下</td>
+            </tr>
+          </table>
+          <div style="font-size:9px; margin-top:3px; text-align:center;">
+            記号：○=健全歯　/=喪失歯　△=残根　C=う蝕　☆=補綴物　×=要抜歯
+          </div>
+        </div>
+      </td>
+      <td style="width: 45%; vertical-align: top;">
+        <table style="margin:0;">
+          <tr><th>義歯</th><td>□ なし　□ 上顎（全部・部分）　□ 下顎（全部・部分）</td></tr>
+          <tr><th>義歯適合</th><td>□ 良好　□ 不適合　□ 未使用</td></tr>
+          <tr><th>残存歯数</th><td>上顎：　　本　/　下顎：　　本　/　計：　　本</td></tr>
+          <tr><th>歯周状態</th><td>□ 良好　□ 軽度歯周炎　□ 中等度　□ 重度</td></tr>
+          <tr><th>口腔衛生</th><td>□ 良好　□ やや不良　□ 不良</td></tr>
+          <tr><th>口腔乾燥</th><td>□ なし　□ 軽度　□ 中等度　□ 重度</td></tr>
+          <tr><th>舌の状態</th><td>□ 正常　□ 舌苔あり　□ 異常所見あり</td></tr>
+          <tr><th>粘膜異常</th><td>□ なし　□ あり（部位：　　　　　　　）</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- 主訴・治療方針 -->
+  <table>
+    <tr><td colspan="2" class="section-title">主訴・訪問歯科診療の目的・治療方針</td></tr>
+    <tr>
+      <th>主訴</th>
+      <td style="height: 25px;"></td>
+    </tr>
+    <tr>
+      <th>訪問目的</th>
+      <td>
+        □ 歯科治療　□ 義歯作製・調整　□ 口腔ケア　□ 摂食嚥下リハビリテーション　□ 定期管理　□ その他（　　　　）
+      </td>
+    </tr>
+    <tr>
+      <th>治療方針</th>
+      <td style="height: 30px;"></td>
+    </tr>
+  </table>
+
+  <!-- 特記事項 -->
+  <table>
+    <tr><td class="section-title">特記事項・注意事項</td></tr>
+    <tr>
+      <td style="height: 40px; font-size:10px;">
+        ※訪問時の注意点、患者対応上の留意事項、家族の要望等
+      </td>
+    </tr>
+  </table>
+
+  <!-- 署名欄 -->
+  <table style="margin-top: 4px;">
+    <tr>
+      <th>記入者</th>
+      <td style="width:30%;">　　　　　　　　　　　　　　印</td>
+      <th>確認者</th>
+      <td style="width:30%;">　　　　　　　　　　　　　　印</td>
+    </tr>
+  </table>
+
+</div>
+</body>
+</html>
