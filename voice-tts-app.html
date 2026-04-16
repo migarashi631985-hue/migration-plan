@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五十嵐先生の声 — Voice TTS App</title>
+<style>
+  :root {
+    --primary: #1a6b52;
+    --primary-light: #e8f5f0;
+    --primary-dark: #0d4a38;
+    --accent: #d4a853;
+    --bg: #f7f8f5;
+    --card: #ffffff;
+    --text: #2c3e2e;
+    --text-light: #6b7c6e;
+    --border: #d4ddd6;
+    --shadow: 0 2px 12px rgba(26,107,82,0.08);
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white; padding: 20px 24px; display: flex; align-items: center; gap: 14px;
+  }
+  .header-icon {
+    width: 44px; height: 44px; background: rgba(255,255,255,0.15);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .container { max-width: 960px; margin: 0 auto; padding: 20px 16px; }
+  .tabs {
+    display: flex; gap: 3px; background: var(--card); border-radius: var(--radius);
+    padding: 3px; box-shadow: var(--shadow); margin-bottom: 16px; overflow-x: auto;
+  }
+  .tab {
+    flex: 1; padding: 10px 12px; border: none; background: transparent;
+    border-radius: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-light); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .tab:hover { background: var(--primary-light); }
+  .tab.active { background: var(--primary); color: white; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600; color: var(--primary-dark);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .text-input {
+    width: 100%; min-height: 140px; border: 2px solid var(--border); border-radius: 8px;
+    padding: 12px; font-size: 16px; line-height: 1.7; font-family: inherit; resize: vertical;
+    transition: border-color 0.2s; color: var(--text);
+  }
+  .text-input:focus { outline: none; border-color: var(--primary); }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-primary:disabled { background: #a8c4b8; cursor: not-allowed; }
+  .btn-secondary { background: var(--primary-light); color: var(--primary-dark); }
+  .btn-secondary:hover { background: #d0ebe2; }
+  .btn-danger { background: #fde8e8; color: #b91c1c; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-accent { background: #fef3c7; color: #92400e; }
+  .btn-accent:hover { background: #fde68a; }
+  .status-bar {
+    display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+    background: var(--primary-light); border-radius: 8px; margin-top: 10px;
+    font-size: 13px; color: var(--primary-dark);
+  }
+  .status-bar.speaking { background: #fef3c7; color: #92400e; animation: pulse 1.5s infinite; }
+  .status-bar.error { background: #fde8e8; color: #b91c1c; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .control-group { display: flex; flex-direction: column; gap: 3px; }
+  .control-group label {
+    font-size: 11px; font-weight: 600; color: var(--text-light);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .control-group input[type="range"] { width: 120px; accent-color: var(--primary); }
+  .control-group select {
+    padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: white;
+  }
+  .api-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .api-input {
+    flex: 1; padding: 8px 12px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 13px; font-family: monospace;
+  }
+  .api-input:focus { outline: none; border-color: var(--primary); }
+  .info-box {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; line-height: 1.6; color: #92400e; margin-top: 10px;
+  }
+  .clone-steps { counter-reset: step; }
+  .clone-step {
+    padding: 14px 14px 14px 50px; position: relative;
+    border-left: 2px solid var(--border); margin-left: 14px; margin-bottom: 6px;
+  }
+  .clone-step:last-child { border-left: 2px solid transparent; }
+  .clone-step::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; left: -14px; top: 12px;
+    width: 26px; height: 26px; background: var(--primary);
+    color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .clone-step h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .clone-step p { font-size: 12px; line-height: 1.6; color: var(--text-light); }
+  .mode-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .mode-badge.browser { background: #dbeafe; color: #1e40af; }
+  .mode-badge.elevenlabs { background: #d1fae5; color: #065f46; }
+  .char-count { text-align: right; font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  .phrase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+  @media (max-width: 600px) {
+    .header { padding: 14px; }
+    .header h1 { font-size: 17px; }
+    .container { padding: 12px 10px; }
+    .controls { flex-direction: column; align-items: stretch; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-icon">&#x1f399;</div>
+  <div>
+    <h1>五十嵐先生の声 — Voice TTS</h1>
+    <p>テキストをご自身の声で読み上げるアプリケーション</p>
+  </div>
+</div>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" data-tab="free">自由入力</button>
+    <button class="tab" data-tab="settings">音声設定</button>
+    <button class="tab" data-tab="clone">声のクローン</button>
+  </div>
+  <div id="panel-free" class="panel active">
+    <div class="card">
+      <div class="card-title">&#x270d;&#xfe0f; テキストを入力
+        <span id="modeBadge" class="mode-badge browser">ブラウザ音声</span>
+      </div>
+      <textarea id="freeText" class="text-input" placeholder="ここに読み上げたいテキストを入力してください..."></textarea>
+      <div class="char-count"><span id="charCount">0</span> 文字</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="speakText()" id="speakBtn">&#x25b6; 読み上げ</button>
+        <button class="btn btn-danger" onclick="stopSpeaking()" id="stopBtn" style="display:none;">&#x23f9; 停止</button>
+        <button class="btn btn-secondary" onclick="pauseResume()" id="pauseBtn" style="display:none;">&#x23f8; 一時停止</button>
+        <button class="btn btn-accent" onclick="convertToFurigana()" title="漢字をふりがなに変換して読み間違いを減らします">&#x1f524; ふりがな変換</button>
+      </div>
+      <div id="statusBar" class="status-bar" style="display:none;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">&#x26a1; クイックフレーズ</div>
+      <div class="phrase-grid">
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('こんにちは、五十嵐です。')">こんにちは</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('ありがとうございます。')">ありがとう</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('はい、わかりました。')">はい</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('少しお待ちください。')">お待ちください</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('お大事になさってください。')">お大事に</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('また次回お会いしましょう。')">また次回</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('定期検診を受けましょう。')">定期検診</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('何かご質問はありますか？')">ご質問は？</button>
+      </div>
+    </div>
+  </div>
+  <div id="panel-settings" class="panel">
+    <div class="card">
+      <div class="card-title">&#x2699;&#xfe0f; 音声モード</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn btn-secondary" id="modeBtn-browser" onclick="setMode('browser')" style="border: 2px solid var(--primary);">
+          &#x1f310; ブラウザ音声
+        </button>
+        <button class="btn btn-secondary" id="modeBtn-elevenlabs" onclick="setMode('elevenlabs')">
+          &#x1f9ec; ElevenLabs（声クローン）
+        </button>
+      </div>
+      <div class="info-box" id="modeInfo">
+        ブラウザ内蔵の音声合成を使用中です。「声のクローン」タブでElevenLabsを設定すると、ご自身の声で読み上げできるようになります。
+      </div>
+    </div>
+    <div class="card" id="browserSettings">
+      <div class="card-title">&#x1f50a; ブラウザ音声設定</div>
+      <div class="controls">
+        <div class="control-group">
+          <label>音声</label>
+          <select id="voiceSelect"></select>
+        </div>
+        <div class="control-group">
+          <label>速度 <span id="rateVal">1.0</span></label>
+          <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('rateVal').textContent=this.value">
+        </div>
+        <div class="control-group">
+          <label>ピッチ <span id="pitchVal">1.0</span></label>
+          <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('pitchVal').textContent=this.value">
+        </div>
+        <div class="control-group">
+          <label>音量 <span id="volVal">1.0</span></label>
+          <input type="range" id="volume" min="0" max="1" step="0.1" value="1.0" oninput="document.getElementById('volVal').textContent=this.value">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="panel-clone" class="panel">
+    <div class="card">
+      <div class="card-title">&#x1f9ec; 声のクローン設定ガイド</div>
+      <p style="font-size: 13px; line-height: 1.7; margin-bottom: 14px;">
+        ElevenLabsの声クローン機能でご自身の声を再現できます。
+      </p>
+      <div class="clone-steps">
+        <div class="clone-step">
+          <h3>ElevenLabsアカウントを作成</h3>
+          <p><a href="https://elevenlabs.io" target="_blank" style="color: var(--primary);">elevenlabs.io</a> でアカウントを作成します。無料プランでもInstant Voice Cloningが利用可能です。</p>
+        </div>
+        <div class="clone-step">
+          <h3>音声ファイルをアップロード</h3>
+          <p>
+            ElevenLabsの「Voices」→「Add a new voice」→「Instant Voice Clone」で音声ファイルをアップロードしてください。
+          </p>
+        </div>
+        <div class="clone-step">
+          <h3>Voice IDとAPIキーを取得</h3>
+          <p>
+            作成した声のVoice IDをコピーします（Voicesページで確認可能）。
+            APIキーはプロフィールのAPI設定ページから取得できます。
+          </p>
+        </div>
+        <div class="clone-step">
+          <h3>下記に設定を入力</h3>
+          <p>APIキーとVoice IDを入力して保存すれば、ご自身の声が使えるようになります。</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">&#x1f511; ElevenLabs API設定</div>
+      <div class="control-group" style="margin-bottom: 10px;">
+        <label>APIキー</label>
+        <div class="api-input-row">
+          <input type="password" id="apiKey" class="api-input" placeholder="xi-xxxxxxxx...">
+          <button class="btn btn-secondary btn-sm" onclick="toggleVis('apiKey')">&#x1f441;</button>
+        </div>
+      </div>
+      <div class="control-group" style="margin-bottom: 10px;">
+        <label>Voice ID</label>
+        <input type="text" id="voiceId" class="api-input" placeholder="Voice IDを入力...">
+      </div>
+      <div class="control-group" style="margin-bottom: 14px;">
+        <label>モデル</label>
+        <select id="elevenModel" style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 13px; width: 100%;">
+          <option value="eleven_multilingual_v2">Multilingual v2（推奨・日本語対応）</option>
+          <option value="eleven_turbo_v2_5">Turbo v2.5（高速）</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveApiSettings()">&#x1f4be; 保存して有効化</button>
+        <button class="btn btn-secondary" onclick="testElevenLabs()">&#x1f50a; 接続テスト</button>
+      </div>
+      <div id="apiStatus" style="display:none; margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 13px;"></div>
+    </div>
+  </div>
+</div>
+<script>
+let currentMode = 'browser';
+let currentAudio = null;
+let isPaused = false;
+const store = {};
+
+function saveStore() {
+  try { localStorage.setItem('voiceTtsSettings', JSON.stringify(store)); } catch(e) {}
+}
+function loadStore() {
+  try {
+    const saved = localStorage.getItem('voiceTtsSettings');
+    if (saved) { Object.assign(store, JSON.parse(saved)); }
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+  populateVoices();
+  document.getElementById('freeText').addEventListener('input', updateCharCount);
+  loadStore();
+  if (store.apiKey) document.getElementById('apiKey').value = store.apiKey;
+  if (store.voiceId) document.getElementById('voiceId').value = store.voiceId;
+  if (store.apiKey && store.voiceId) { setMode('elevenlabs'); }
+});
+
+function populateVoices() {
+  const select = document.getElementById('voiceSelect');
+  function load() {
+    const voices = speechSynthesis.getVoices();
+    select.innerHTML = '';
+    const ja = voices.filter(v => v.lang.startsWith('ja'));
+    const other = voices.filter(v => !v.lang.startsWith('ja'));
+    [['日本語', ja], ['その他', other]].forEach(([label, list]) => {
+      if (list.length === 0) return;
+      const group = document.createElement('optgroup');
+      group.label = label;
+      list.forEach((v, i) => {
+        const opt = document.createElement('option');
+        opt.value = voices.indexOf(v);
+        opt.textContent = v.name + ' (' + v.lang + ')';
+        if (label === '日本語' && i === 0) opt.selected = true;
+        group.appendChild(opt);
+      });
+      select.appendChild(group);
+    });
+  }
+  load();
+  speechSynthesis.onvoiceschanged = load;
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeBtn-browser').style.border = mode === 'browser' ? '2px solid var(--primary)' : 'none';
+  document.getElementById('modeBtn-elevenlabs').style.border = mode === 'elevenlabs' ? '2px solid var(--primary)' : 'none';
+  document.getElementById('browserSettings').style.display = mode === 'browser' ? 'block' : 'none';
+  const badge = document.getElementById('modeBadge');
+  if (mode === 'elevenlabs') {
+    badge.className = 'mode-badge elevenlabs';
+    badge.textContent = 'ElevenLabs';
+    document.getElementById('modeInfo').textContent = 'ElevenLabsの声クローンを使用します。ご自身の声で読み上げます。';
+  } else {
+    badge.className = 'mode-badge browser';
+    badge.textContent = 'ブラウザ音声';
+    document.getElementById('modeInfo').textContent = 'ブラウザ内蔵の音声合成を使用中です。「声のクローン」タブでElevenLabsを設定すると、ご自身の声で読み上げできるようになります。';
+  }
+}
+
+async function speakText() {
+  const text = document.getElementById('freeText').value.trim();
+  if (!text) return;
+  if (currentMode === 'elevenlabs' && store.apiKey && store.voiceId) {
+    await speakElevenLabs(text);
+  } else {
+    speakBrowser(text);
+  }
+}
+
+function speakBrowser(text) {
+  stopSpeaking();
+  const u = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  const idx = document.getElementById('voiceSelect').value;
+  if (voices[idx]) u.voice = voices[idx];
+  u.rate = parseFloat(document.getElementById('rate').value);
+  u.pitch = parseFloat(document.getElementById('pitch').value);
+  u.volume = parseFloat(document.getElementById('volume').value);
+  u.lang = 'ja-JP';
+  u.onstart = () => { setUi(true); showStatusMsg('ブラウザ音声で読み上げ中...'); };
+  u.onend = () => setUi(false);
+  u.onerror = () => setUi(false);
+  speechSynthesis.speak(u);
+}
+
+async function speakElevenLabs(text) {
+  setUi(true);
+  showStatusMsg('ElevenLabsで音声を生成中...');
+  try {
+    const res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + store.voiceId, {
+      method: 'POST',
+      headers: { 'Accept': 'audio/mpeg', 'Content-Type': 'application/json', 'xi-api-key': store.apiKey },
+      body: JSON.stringify({
+        text: applyFuriganaDict(text),
+        model_id: document.getElementById('elevenModel').value,
+        voice_settings: { stability: 0.65, similarity_boost: 0.90, style: 0.0, use_speaker_boost: true },
+        language_code: 'ja'
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail?.message || 'API error: ' + res.status);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.onended = () => { setUi(false); URL.revokeObjectURL(url); };
+    currentAudio.onerror = () => { setUi(false); showStatusMsg('再生エラー', 'error'); };
+    currentAudio.play();
+    showStatusMsg('ご自身の声で読み上げ中...');
+  } catch (err) {
+    setUi(false);
+    showStatusMsg('エラー: ' + err.message, 'error');
+  }
+}
+
+function stopSpeaking() {
+  speechSynthesis.cancel();
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+  isPaused = false;
+  setUi(false);
+}
+
+function pauseResume() {
+  if (currentAudio) {
+    if (isPaused) { currentAudio.play(); isPaused = false; document.getElementById('pauseBtn').innerHTML = '&#x23f8; 一時停止'; }
+    else { currentAudio.pause(); isPaused = true; document.getElementById('pauseBtn').innerHTML = '&#x25b6; 再開'; }
+  } else {
+    if (isPaused) { speechSynthesis.resume(); isPaused = false; document.getElementById('pauseBtn').innerHTML = '&#x23f8; 一時停止'; }
+    else { speechSynthesis.pause(); isPaused = true; document.getElementById('pauseBtn').innerHTML = '&#x25b6; 再開'; }
+  }
+}
+
+function setUi(speaking) {
+  document.getElementById('speakBtn').style.display = speaking ? 'none' : 'flex';
+  document.getElementById('stopBtn').style.display = speaking ? 'flex' : 'none';
+  document.getElementById('pauseBtn').style.display = speaking ? 'flex' : 'none';
+  if (!speaking) {
+    document.getElementById('statusBar').style.display = 'none';
+    isPaused = false;
+    document.getElementById('pauseBtn').innerHTML = '&#x23f8; 一時停止';
+  }
+}
+
+function showStatusMsg(msg, type) {
+  const bar = document.getElementById('statusBar');
+  bar.textContent = msg;
+  bar.style.display = 'flex';
+  bar.className = 'status-bar' + (type === 'error' ? ' error' : ' speaking');
+}
+
+function quickPhrase(text) {
+  document.getElementById('freeText').value = text;
+  updateCharCount();
+  speakText();
+}
+
+const furiganaDict = {
+  '口腔': 'こうくう', '歯槽膿漏': 'しそうのうろう', '歯周病': 'ししゅうびょう',
+  '咀嚼': 'そしゃく', '嚥下': 'えんげ', '咽頭': 'いんとう', '義歯': 'ぎし',
+  '齲蝕': 'うしょく', '歯肉': 'しにく', '歯垢': 'しこう', '歯石': 'しせき',
+  '補綴': 'ほてつ', '顎関節': 'がくかんせつ', '抜歯': 'ばっし', '歯髄': 'しずい',
+  '根管': 'こんかん', '食塊': 'しょっかい',
+  '低栄養': 'ていえいよう', '誤嚥': 'ごえん', '誤嚥性肺炎': 'ごえんせいはいえん',
+  '褥瘡': 'じょくそう', '疼痛': 'とうつう', '廃用': 'はいよう',
+  '前駆症状': 'ぜんくしょうじょう', '疫学': 'えきがく', '薬剤': 'やくざい',
+  '認知症': 'にんちしょう', '骨粗鬆症': 'こつそしょうしょう',
+  '体性感覚野': 'たいせいかんかくや', '運動野': 'うんどうや', '滑舌': 'かつぜつ',
+  'サルコペニア': 'サルコペニア', 'オーラルフレイル': 'オーラルフレイル',
+  'フレイル': 'フレイル', 'ロコモ': 'ロコモ',
+  '五十嵐': 'いがらし', '宇都宮': 'うつのみや', '栃木県': 'とちぎけん',
+  '健康寿命': 'けんこうじゅみょう', '平均寿命': 'へいきんじゅみょう',
+  '要介護': 'ようかいご', '虚弱': 'きょじゃく', '予備能力': 'よびのうりょく',
+  '定期検診': 'ていきけんしん', '歯科医師': 'しかいし', '歯科衛生士': 'しかえいせいし',
+  '公衆衛生': 'こうしゅうえいせい', '地域包括': 'ちいきほうかつ',
+  '喪失': 'そうしつ', '保有': 'ほゆう', '早世': 'そうせい', '呑み込み': 'のみこみ',
+  '味覚障害': 'みかくしょうがい', '口腔乾燥': 'こうくうかんそう',
+  '身体機能': 'しんたいきのう', '口腔機能': 'こうくうきのう',
+  '口腔ケア': 'こうくうケア', '抗うつ剤': 'こううつざい', '抗不安薬': 'こうふあんやく'
+};
+
+function applyFuriganaDict(text) {
+  const keys = Object.keys(furiganaDict).sort((a, b) => b.length - a.length);
+  let result = text;
+  for (const term of keys) { result = result.split(term).join(furiganaDict[term]); }
+  return result;
+}
+
+function convertToFurigana() {
+  const textarea = document.getElementById('freeText');
+  const original = textarea.value;
+  const converted = applyFuriganaDict(original);
+  if (converted !== original) {
+    textarea.value = converted;
+    updateCharCount();
+    showStatusMsg('ふりがなに変換しました（読み間違い防止）');
+    setTimeout(() => { const bar = document.getElementById('statusBar'); if (bar.textContent.includes('ふりがな')) bar.style.display = 'none'; }, 3000);
+  } else {
+    showStatusMsg('変換する用語が見つかりませんでした');
+    setTimeout(() => { const bar = document.getElementById('statusBar'); if (bar.textContent.includes('見つかりません')) bar.style.display = 'none'; }, 3000);
+  }
+}
+
+function updateCharCount() {
+  document.getElementById('charCount').textContent = document.getElementById('freeText').value.length;
+}
+
+function saveApiSettings() {
+  const key = document.getElementById('apiKey').value.trim();
+  const vid = document.getElementById('voiceId').value.trim();
+  if (!key || !vid) { showApiMsg('APIキーとVoice IDの両方を入力してください。', 'error'); return; }
+  store.apiKey = key;
+  store.voiceId = vid;
+  saveStore();
+  setMode('elevenlabs');
+  showApiMsg('設定を保存しました！自由入力タブでご自身の声をお試しください。', 'success');
+}
+
+async function testElevenLabs() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) { showApiMsg('APIキーを入力してください。', 'error'); return; }
+  showApiMsg('接続テスト中...', 'info');
+  try {
+    const res = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': key } });
+    if (!res.ok) throw new Error('認証失敗 (' + res.status + ')');
+    const data = await res.json();
+    const vid = document.getElementById('voiceId').value.trim();
+    let msg = '接続成功！ ' + data.voices.length + '個の音声が見つかりました。';
+    if (vid) {
+      const found = data.voices.find(v => v.voice_id === vid);
+      msg += found ? ' 「' + found.name + '」が選択されています。' : ' ※入力されたVoice IDは見つかりませんでした。';
+    } else {
+      msg += ' 利用可能なVoice ID: ' + data.voices.slice(0, 3).map(v => v.name + '=' + v.voice_id).join(', ');
+    }
+    showApiMsg(msg, 'success');
+  } catch (err) { showApiMsg('エラー: ' + err.message, 'error'); }
+}
+
+function showApiMsg(msg, type) {
+  const el = document.getElementById('apiStatus');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.background = type === 'success' ? '#e8f5f0' : type === 'error' ? '#fde8e8' : '#e8f0f5';
+  el.style.color = type === 'success' ? '#065f46' : type === 'error' ? '#b91c1c' : '#1e3a5f';
+}
+
+function toggleVis(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+</script>
+</body>
+</html>
