@@ -123,7 +123,7 @@ def add_title_slide(prs: Presentation, meta: DeckMeta):
                  f"実施方法：{meta.method}", size=14,
                  color=RGBColor(0xEE, 0xEE, 0xEE))
     _add_textbox(slide, Cm(1.5), Cm(16.0), Cm(30.8), Cm(0.8),
-                 "講師：＿＿＿＿＿　　日時：＿＿＿＿＿", size=12,
+                 "進行：＿＿＿＿＿（施設内担当）　　日時：＿＿＿＿＿", size=12,
                  color=RGBColor(0xDD, 0xDD, 0xDD))
 
 
