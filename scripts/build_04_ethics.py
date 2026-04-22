@@ -316,12 +316,13 @@ def build():
     # 20 質疑
     add_qa_slide(prs, META)
 
-    # Attach speaker notes + auto-play narration audio (offline TTS)
+    # Attach speaker notes only (audio removed – TTS quality was insufficient).
+    # The narration text remains available as a recording script.
     root = Path(__file__).resolve().parent.parent
     audio_dir = root / "audio" / "04"
     attach_narration(
         prs, NARRATION_04, audio_dir,
-        deck_key="04", embed_audio=True,
+        deck_key="04", embed_audio=False,
     )
 
     finalise(prs)
