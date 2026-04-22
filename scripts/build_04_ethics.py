@@ -326,7 +326,7 @@ def build():
 
     finalise(prs)
 
-    out = root / "slides" / META.filename
+    out = root / "法定研修" / META.filename
     save(prs, out)
     print(f"created: {out} ({len(prs.slides)} slides)")
 
