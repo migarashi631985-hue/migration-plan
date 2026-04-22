@@ -15,6 +15,8 @@ from slide_utils import (
     new_presentation,
     save,
 )
+from narration_04 import NARRATION_04
+from narration_utils import attach_narration
 
 META = DeckMeta(
     month="4月",
@@ -314,9 +316,17 @@ def build():
     # 20 質疑
     add_qa_slide(prs, META)
 
+    # Attach speaker notes + auto-play narration audio (offline TTS)
+    root = Path(__file__).resolve().parent.parent
+    audio_dir = root / "audio" / "04"
+    attach_narration(
+        prs, NARRATION_04, audio_dir,
+        deck_key="04", embed_audio=True,
+    )
+
     finalise(prs)
 
-    out = Path(__file__).resolve().parent.parent / "slides" / META.filename
+    out = root / "slides" / META.filename
     save(prs, out)
     print(f"created: {out} ({len(prs.slides)} slides)")
 
