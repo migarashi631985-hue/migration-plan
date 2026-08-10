@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五十嵐先生の声 — Voice TTS App</title>
+<style>
+  :root {
+    --primary: #1a6b52;
+    --primary-light: #e8f5f0;
+    --primary-dark: #0d4a38;
+    --accent: #d4a853;
+    --bg: #f7f8f5;
+    --card: #ffffff;
+    --text: #2c3e2e;
+    --text-light: #6b7c6e;
+    --border: #d4ddd6;
+    --shadow: 0 2px 12px rgba(26,107,82,0.08);
+    --radius: 12px;
+    --danger: #b91c1c;
+    --rec: #dc2626;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .container { max-width: 960px; margin: 0 auto; padding: 20px 16px; }
+  .tabs {
+    display: flex; gap: 3px;
+    background: var(--card); border-radius: var(--radius);
+    padding: 3px; box-shadow: var(--shadow); margin-bottom: 16px;
+    overflow-x: auto;
+  }
+  .tab {
+    flex: 1; padding: 10px 12px; border: none; background: transparent;
+    border-radius: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-light); cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab:hover { background: var(--primary-light); }
+  .tab.active { background: var(--primary); color: white; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600; color: var(--primary-dark);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .text-input {
+    width: 100%; min-height: 140px;
+    border: 2px solid var(--border); border-radius: 8px;
+    padding: 12px; font-size: 16px; line-height: 1.7;
+    font-family: inherit; resize: vertical;
+    transition: border-color 0.2s; color: var(--text);
+  }
+  .text-input:focus { outline: none; border-color: var(--primary); }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-primary:disabled { background: #a8c4b8; cursor: not-allowed; }
+  .btn-secondary { background: var(--primary-light); color: var(--primary-dark); }
+  .btn-secondary:hover { background: #d0ebe2; }
+  .btn-danger { background: #fde8e8; color: #b91c1c; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-accent { background: #fef3c7; color: #92400e; }
+  .btn-accent:hover { background: #fde68a; }
+  .btn-rec {
+    background: var(--rec); color: white;
+    animation: none;
+  }
+  .btn-rec.recording {
+    animation: rec-pulse 1s infinite;
+  }
+  @keyframes rec-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+    50% { opacity: 0.85; box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+  }
+  .status-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; background: var(--primary-light);
+    border-radius: 8px; margin-top: 10px; font-size: 13px;
+    color: var(--primary-dark);
+  }
+  .status-bar.speaking { background: #fef3c7; color: #92400e; animation: pulse 1.5s infinite; }
+  .status-bar.error { background: #fde8e8; color: #b91c1c; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .slide-list { max-height: 600px; overflow-y: auto; }
+  .slide-item {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .slide-item:last-child { border-bottom: none; }
+  .slide-top {
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .slide-num {
+    background: var(--primary); color: white;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .slide-content { flex: 1; }
+  .slide-text {
+    font-size: 13px; line-height: 1.5; color: var(--text);
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .slide-audio-info {
+    font-size: 11px; color: var(--text-light); margin-top: 4px;
+  }
+  .slide-actions { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; }
+  .slide-rec-area {
+    margin-top: 8px; margin-left: 36px;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    display: none;
+  }
+  .slide-rec-area.has-recording { display: block; }
+  .slide-rec-player {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .slide-rec-player audio { height: 32px; flex: 1; min-width: 150px; }
+  .rec-timer {
+    font-size: 13px; font-weight: 600; color: var(--rec);
+    font-variant-numeric: tabular-nums;
+    min-width: 50px;
+  }
+  .controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .control-group { display: flex; flex-direction: column; gap: 3px; }
+  .control-group label {
+    font-size: 11px; font-weight: 600; color: var(--text-light);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .control-group input[type="range"] { width: 120px; accent-color: var(--primary); }
+  .control-group select {
+    padding: 5px 8px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 12px; background: white;
+  }
+  .api-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .api-input {
+    flex: 1; padding: 8px 12px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 13px; font-family: monospace;
+  }
+  .api-input:focus { outline: none; border-color: var(--primary); }
+  .info-box {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; line-height: 1.6; color: #92400e;
+    margin-top: 10px;
+  }
+  .clone-steps { counter-reset: step; }
+  .clone-step {
+    padding: 14px 14px 14px 50px; position: relative;
+    border-left: 2px solid var(--border); margin-left: 14px; margin-bottom: 6px;
+  }
+  .clone-step:last-child { border-left: 2px solid transparent; }
+  .clone-step::before {
+    counter-increment: step; content: counter(step);
+    position: absolute; left: -14px; top: 12px;
+    width: 26px; height: 26px; background: var(--primary);
+    color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .clone-step h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .clone-step p { font-size: 12px; line-height: 1.6; color: var(--text-light); }
+  .mode-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .mode-badge.browser { background: #dbeafe; color: #1e40af; }
+  .mode-badge.elevenlabs { background: #d1fae5; color: #065f46; }
+  .char-count { text-align: right; font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  .phrase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+  .mini-player {
+    display: flex; align-items: center; gap: 8px;
+    background: #f1f5f2; border-radius: 8px; padding: 8px 12px;
+  }
+  .mini-player audio { height: 32px; flex: 1; }
+  .download-row {
+    display: flex; gap: 8px; align-items: center; margin-top: 10px;
+    padding: 10px 14px; background: #f0fdf4; border-radius: 8px;
+    border: 1px solid #bbf7d0;
+  }
+  .download-row a {
+    color: var(--primary-dark); font-weight: 600; font-size: 13px;
+    text-decoration: none;
+  }
+  .download-row a:hover { text-decoration: underline; }
+  .batch-progress {
+    margin-top: 10px; padding: 10px 14px;
+    background: var(--primary-light); border-radius: 8px;
+    font-size: 13px;
+  }
+  .batch-progress-bar {
+    height: 6px; background: #d0ebe2; border-radius: 3px;
+    margin-top: 6px; overflow: hidden;
+  }
+  .batch-progress-fill {
+    height: 100%; background: var(--primary);
+    border-radius: 3px; transition: width 0.3s;
+    width: 0%;
+  }
+  @media (max-width: 600px) {
+    .header { padding: 14px; }
+    .header h1 { font-size: 17px; }
+    .container { padding: 12px 10px; }
+    .controls { flex-direction: column; align-items: stretch; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">&#x1f399;</div>
+  <div>
+    <h1>五十嵐先生の声 — Voice TTS</h1>
+    <p>テキストをご自身の声で読み上げ・録音するアプリケーション</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" data-tab="free">自由入力</button>
+    <button class="tab" data-tab="lecture">講演ノート</button>
+    <button class="tab" data-tab="settings">音声設定</button>
+    <button class="tab" data-tab="clone">声のクローン</button>
+  </div>
+
+  <!-- Free Text Panel -->
+  <div id="panel-free" class="panel active">
+    <div class="card">
+      <div class="card-title">
+        &#x270d;&#xfe0f; テキストを入力
+        <span id="modeBadge" class="mode-badge browser">ブラウザ音声</span>
+      </div>
+      <textarea id="freeText" class="text-input" placeholder="ここに読み上げたいテキストを入力してください..."></textarea>
+      <div class="char-count"><span id="charCount">0</span> 文字</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="speakText()" id="speakBtn">&#x25b6; 読み上げ</button>
+        <button class="btn btn-danger" onclick="stopSpeaking()" id="stopBtn" style="display:none;">&#x23f9; 停止</button>
+        <button class="btn btn-secondary" onclick="pauseResume()" id="pauseBtn" style="display:none;">&#x23f8; 一時停止</button>
+        <button class="btn btn-accent" onclick="convertToFurigana()" title="漢字をふりがなに変換">&#x1f524; ふりがな変換</button>
+        <button class="btn btn-primary" onclick="generateAndDownloadFree()" id="dlFreeBtn" title="ElevenLabsでMP3を生成してダウンロード">&#x1f4e5; MP3保存</button>
+      </div>
+      <div id="statusBar" class="status-bar" style="display:none;"></div>
+      <div id="freeDownloadArea"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">&#x26a1; クイックフレーズ</div>
+      <div class="phrase-grid">
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('こんにちは、五十嵐です。')">こんにちは</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('ありがとうございます。')">ありがとう</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('はい、わかりました。')">はい</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('少しお待ちください。')">お待ちください</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('お大事になさってください。')">お大事に</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('また次回お会いしましょう。')">また次回</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('定期検診を受けましょう。')">定期検診</button>
+        <button class="btn btn-secondary btn-sm" onclick="quickPhrase('何かご質問はありますか？')">ご質問は？</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lecture Panel -->
+  <div id="panel-lecture" class="panel">
+    <div class="card">
+      <div class="card-title">&#x1f4d6; 講演「お家でできる低栄養予防のための口腔ケアについて」</div>
+      <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">
+        各スライドの再生・TTS転送に加え、&#x1f3a4;ボタンでマイク録音してMP3保存できます。
+      </p>
+      <div class="btn-row" style="margin-top:0; margin-bottom: 12px;">
+        <button class="btn btn-primary btn-sm" onclick="batchGenerateAll()">&#x1f4e5; 全スライドMP3一括生成（ElevenLabs）</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadAllRecordings()">&#x1f4e6; 録音済みを一括DL</button>
+      </div>
+      <div id="batchProgress" class="batch-progress" style="display:none;">
+        <span id="batchProgressText">生成中...</span>
+        <div class="batch-progress-bar"><div id="batchProgressFill" class="batch-progress-fill"></div></div>
+      </div>
+      <div class="slide-list" id="slideList"></div>
+    </div>
+  </div>
+
+  <!-- Settings Panel -->
+  <div id="panel-settings" class="panel">
+    <div class="card">
+      <div class="card-title">&#x2699;&#xfe0f; 音声モード</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn btn-secondary" id="modeBtn-browser" onclick="setMode('browser')" style="border: 2px solid var(--primary);">
+          &#x1f310; ブラウザ音声
+        </button>
+        <button class="btn btn-secondary" id="modeBtn-elevenlabs" onclick="setMode('elevenlabs')">
+          &#x1f9ec; ElevenLabs（声クローン）
+        </button>
+      </div>
+      <div class="info-box" id="modeInfo">
+        ブラウザ内蔵の音声合成を使用中です。「声のクローン」タブでElevenLabsを設定すると、五十嵐先生ご自身の声で読み上げできるようになります。
+      </div>
+    </div>
+    <div class="card" id="browserSettings">
+      <div class="card-title">&#x1f50a; ブラウザ音声設定</div>
+      <div class="controls">
+        <div class="control-group">
+          <label>音声</label>
+          <select id="voiceSelect"></select>
+        </div>
+        <div class="control-group">
+          <label>速度 <span id="rateVal">1.0</span></label>
+          <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('rateVal').textContent=this.value">
+        </div>
+        <div class="control-group">
+          <label>ピッチ <span id="pitchVal">1.0</span></label>
+          <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('pitchVal').textContent=this.value">
+        </div>
+        <div class="control-group">
+          <label>音量 <span id="volVal">1.0</span></label>
+          <input type="range" id="volume" min="0" max="1" step="0.1" value="1.0" oninput="document.getElementById('volVal').textContent=this.value">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">&#x1f3a4; マイク録音設定</div>
+      <div class="control-group">
+        <label>録音形式</label>
+        <select id="recFormat" style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 13px;">
+          <option value="audio/webm">WebM（標準）</option>
+          <option value="audio/mp4">MP4/AAC</option>
+        </select>
+      </div>
+      <div class="info-box" style="margin-top: 10px;">
+        マイクで録音した音声はブラウザ対応形式で保存されます。ダウンロード時のファイル名は .mp3 拡張子ですが、実際のコーデックはブラウザにより異なります。ElevenLabsのMP3保存機能を使うと本物のMP3形式で保存できます。
+      </div>
+    </div>
+  </div>
+
+  <!-- Clone Panel -->
+  <div id="panel-clone" class="panel">
+    <div class="card">
+      <div class="card-title">&#x1f9ec; 声のクローン設定ガイド</div>
+      <p style="font-size: 13px; line-height: 1.7; margin-bottom: 14px;">
+        講演の録音データ（合計約20分42秒）を元に、ElevenLabsの声クローン機能でご自身の声を再現できます。
+      </p>
+      <div class="clone-steps">
+        <div class="clone-step">
+          <h3>ElevenLabsアカウントを作成</h3>
+          <p><a href="https://elevenlabs.io" target="_blank" style="color: var(--primary);">elevenlabs.io</a> でアカウントを作成します。無料プランでもInstant Voice Cloningが利用可能です。</p>
+        </div>
+        <div class="clone-step">
+          <h3>結合音声ファイルをアップロード</h3>
+          <p>
+            このアプリと一緒に出力されている <strong>audio/igarashi-voice-combined.wav</strong>（約20分の録音）を使います。
+            ElevenLabsの「Voices」→「Add a new voice」→「Instant Voice Clone」で音声ファイルをアップロードしてください。
+          </p>
+        </div>
+        <div class="clone-step">
+          <h3>Voice IDとAPIキーを取得</h3>
+          <p>
+            作成した声のVoice IDをコピーします（Voicesページで確認可能）。
+            APIキーはプロフィールのAPI設定ページから取得できます。
+          </p>
+        </div>
+        <div class="clone-step">
+          <h3>下記に設定を入力</h3>
+          <p>APIキーとVoice IDを入力して保存すれば、自由入力で五十嵐先生の声が使えるようになります。</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">&#x1f511; ElevenLabs API設定</div>
+      <div class="control-group" style="margin-bottom: 10px;">
+        <label>APIキー</label>
+        <div class="api-input-row">
+          <input type="password" id="apiKey" class="api-input" placeholder="xi-xxxxxxxx...">
+          <button class="btn btn-secondary btn-sm" onclick="toggleVis('apiKey')">&#x1f441;</button>
+        </div>
+      </div>
+      <div class="control-group" style="margin-bottom: 10px;">
+        <label>Voice ID</label>
+        <input type="text" id="voiceId" class="api-input" placeholder="Voice IDを入力...">
+      </div>
+      <div class="control-group" style="margin-bottom: 14px;">
+        <label>モデル</label>
+        <select id="elevenModel" style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 13px; width: 100%;">
+          <option value="eleven_multilingual_v2">Multilingual v2（推奨・日本語対応）</option>
+          <option value="eleven_turbo_v2_5">Turbo v2.5（高速）</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveApiSettings()">&#x1f4be; 保存して有効化</button>
+        <button class="btn btn-secondary" onclick="testElevenLabs()">&#x1f50a; 接続テスト</button>
+      </div>
+      <div id="apiStatus" style="display:none; margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 13px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">&#x1f3a7; 元の講演音声を試聴</div>
+      <p style="font-size: 12px; color: var(--text-light); margin-bottom: 8px;">
+        スライド2の録音サンプル（ペンフィールドのマップの説明）
+      </p>
+      <div class="mini-player">
+        <audio id="sampleAudio" controls preload="none" style="width: 100%; height: 36px;">
+          <source src="audio/media2.mp3" type="audio/mpeg">
+        </audio>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var lectureData = [
+  { slide: 1, text: "本日は口腔ケアと低栄養予防という演題で講演させていただきます。宇都宮歯科医師会公衆衛生担当の五十嵐と申します。講演後わからないことや要望等がありましたら宇都宮市歯科医師会もしくは僕のクリニックに連絡ください。", audio: null, duration: null },
+  { slide: 2, text: "このスライドはペンフィールドのマップと言います。体性感覚野と運動野の2か所の部分で書かれました。お口の占める脳の支配領域が大きいのが分かると思います。つまり口腔の健康は全身につながることがご理解できると思います。", audio: "audio/media2.mp3", duration: "0:31" },
+  { slide: 3, text: "フレイルとは何でしょう？サルコペニアとは筋肉量が減少し筋力や身体機能が低下している状態です。ロコモとは骨粗鬆症や関節の痛みなど運動器の障害のことです。フレイルとは加齢に伴い身体の予備能力が低下し健康障害を起こしやすくなった状態、いわゆる虚弱です。", audio: "audio/media3.mp3", duration: "1:01" },
+  { slide: 4, text: "フレイルは健康と要介護の丁度中間の状態です。初期のフレイルのうちに気が付けば健康に近づくことが可能です。そのフレイルの前駆症状がオーラルフレイルなのです。お口の中の問題がフレイルの引き金になるということです。", audio: "audio/media4.mp3", duration: "0:39" },
+  { slide: 5, text: "生活習慣を見直すこともフレイル予防につながります。地域のコミュニティーとの交流やサロンも利用することにより自身の状態を把握することが大切です。", audio: "audio/media5.mp3", duration: "0:23" },
+  { slide: 6, text: "オーラルフレイルについてお話します。口腔ケアを行わないと噛めない、噛む力の低下、柔らかいものを食べるという悪循環により口腔機能の低下を招きます。", audio: "audio/media6.mp3", duration: "0:35" },
+  { slide: 7, text: "口腔ケアという言葉は歯科衛生士のクリーニングと思われているかもしれません。実はすべての歯科の治療のことを言います。", audio: "audio/media7.mp3", duration: "0:19" },
+  { slide: 8, text: "健康寿命とは日常生活を制限されることなく健康的に生活を送ることのできる期間のことです。健康寿命には口腔が大きく関係しています。", audio: "audio/media8.mp3", duration: "0:35" },
+  { slide: 9, text: "我が国の2019年の平均寿命は男性81.41歳、女性87.45歳です。多数の方が男性であれば80歳以上、女性であれば90歳近くまで生きるということなのです。", audio: "audio/media9.mp3", duration: "0:26" },
+  { slide: 10, text: "男性で8年強、女性で十数年、要介護状態で生活するということです。この期間を少なくすることに口腔が大きく関係しています。", audio: "audio/media10.mp3", duration: "0:24" },
+  { slide: 11, text: "健康寿命にお口の状態が大きく影響するという科学的データです。自分の歯を保有することが秘訣です。歯を失ってもしっかり入れ歯を使えば機能は維持されます。", audio: "audio/media11.mp3", duration: "1:27" },
+  { slide: 12, text: "薬剤影響や認知症もオーラルフレイルの引き金となります。食事の際はしっかり噛んで呑み込むことを意識し、日頃からよく話すことが予防になります。", audio: "audio/media12.mp3", duration: "1:35" },
+  { slide: 13, text: "それではどうしてオーラルフレイル状態になるのでしょう？具体的症例で説明します。", audio: "audio/media13.mp3", duration: "0:09" },
+  { slide: 14, text: "気が付かないうちに口腔の疾患は進行してゆきます。この三人ともオーラルフレイルが進行していましたが自覚がありませんでした。歯科治療と歯周病治療で改善しました。", audio: "audio/media14.mp3", duration: "0:38" },
+  { slide: 15, text: "治療に数年かかっています。2症例ともに2年近く治療に時間を要しました。", audio: "audio/media15.mp3", duration: "0:57" },
+  { slide: 16, text: "オーラルフレイル予防の3つの柱は、かかりつけ歯科医での定期検診、口の衰えに気が付くこと、バランスの取れた食生活です。", audio: "audio/media16.mp3", duration: "0:25" },
+  { slide: 17, text: "フレイル予防の3つの柱は栄養、身体、社会活動です。なんでも食べられる口腔内を維持して積極的に外に出ましょう。", audio: "audio/media17.mp3", duration: "0:22" },
+  { slide: 18, text: "むせる、食べこぼし、食欲がない、滑舌が悪い、口臭が気になる、歯が少ない。一つでも該当すれば歯科医院にご相談ください。", audio: "audio/media18.mp3", duration: "0:28" },
+  { slide: 19, text: "オーラルフレイルチェックシートです。8つの質問でオーラルフレイルのリスクを知ることができます。", audio: "audio/media19.mp3", duration: "1:10" },
+  { slide: 21, text: "呑み込みの過程です。先行期は認識、準備期は噛んでゲル状にする（パの動き）、口腔期は奥へ運ぶ（タの動き）、咽頭期はごっくん（カの動き）です。", audio: "audio/media21.mp3", duration: "1:02" },
+  { slide: 22, text: "パタカの発音テストです。10秒間でパ、タ、カをそれぞれ繰り返し、1秒あたりの回数を測定します。正常値はパ6.4回、タ6.1回、カ5.7回です。", audio: "audio/media22.mp3", duration: "0:44" },
+  { slide: 23, text: "栃木県歯科医師会の健康体操のリーフレットです。", audio: "audio/media23.mp3", duration: "0:57" },
+  { slide: 24, text: "日本歯科医師会のページよりダウンロードしました。わかりやすいトレーニングなので参考にしてください。", audio: "audio/media25.mp3", duration: "5:28" },
+  { slide: 25, text: "ご清聴ありがとうございました。", audio: "audio/media26.mp3", duration: "0:20" }
+];
+
+var currentMode = 'browser';
+var currentAudio = null;
+var isPaused = false;
+var store = {};
+var slideRecordings = {};
+var activeRecorders = {};
+
+function saveStore() {
+  try { localStorage.setItem('voiceTtsSettings', JSON.stringify(store)); } catch(e) {}
+}
+function loadStore() {
+  try {
+    var saved = localStorage.getItem('voiceTtsSettings');
+    if (saved) Object.assign(store, JSON.parse(saved));
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+  populateVoices();
+  renderSlideList();
+  document.getElementById('freeText').addEventListener('input', updateCharCount);
+  loadStore();
+  if (store.apiKey) document.getElementById('apiKey').value = store.apiKey;
+  if (store.voiceId) document.getElementById('voiceId').value = store.voiceId;
+  if (store.apiKey && store.voiceId) setMode('elevenlabs');
+});
+
+function populateVoices() {
+  var select = document.getElementById('voiceSelect');
+  function load() {
+    var voices = speechSynthesis.getVoices();
+    select.innerHTML = '';
+    var ja = voices.filter(function(v) { return v.lang.startsWith('ja'); });
+    var other = voices.filter(function(v) { return !v.lang.startsWith('ja'); });
+    [['日本語', ja], ['その他', other]].forEach(function(pair) {
+      var label = pair[0], list = pair[1];
+      if (list.length === 0) return;
+      var group = document.createElement('optgroup');
+      group.label = label;
+      list.forEach(function(v, i) {
+        var opt = document.createElement('option');
+        opt.value = voices.indexOf(v);
+        opt.textContent = v.name + ' (' + v.lang + ')';
+        if (label === '日本語' && i === 0) opt.selected = true;
+        group.appendChild(opt);
+      });
+      select.appendChild(group);
+    });
+  }
+  load();
+  speechSynthesis.onvoiceschanged = load;
+}
+
+function renderSlideList() {
+  var list = document.getElementById('slideList');
+  list.innerHTML = '';
+  lectureData.forEach(function(note, idx) {
+    var item = document.createElement('div');
+    item.className = 'slide-item';
+    item.id = 'slide-item-' + idx;
+    var hasRec = !!slideRecordings[idx];
+    item.innerHTML =
+      '<div class="slide-top">' +
+        '<div class="slide-num">' + note.slide + '</div>' +
+        '<div class="slide-content">' +
+          '<div class="slide-text">' + note.text + '</div>' +
+          '<div class="slide-audio-info">' +
+            (note.audio ? '&#x1f3b5; 録音あり (' + note.duration + ')' : '&#x1f4dd; テキストのみ') +
+          '</div>' +
+        '</div>' +
+        '<div class="slide-actions">' +
+          (note.audio ? '<button class="btn btn-accent btn-sm" onclick="playOriginal(\'' + note.audio + '\', event)">&#x25b6; 再生</button>' : '') +
+          '<button class="btn btn-secondary btn-sm" onclick="sendToTTS(' + idx + ', event)">TTS</button>' +
+          '<button class="btn btn-rec btn-sm" id="recBtn-' + idx + '" onclick="toggleRecording(' + idx + ', event)">&#x1f3a4; 録音</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="slide-rec-area' + (hasRec ? ' has-recording' : '') + '" id="recArea-' + idx + '">' +
+        '<div id="recContent-' + idx + '">' +
+          (hasRec ? buildRecPlayerHtml(idx) : '') +
+        '</div>' +
+        '<div class="rec-timer" id="recTimer-' + idx + '" style="display:none;">0:00</div>' +
+      '</div>';
+    list.appendChild(item);
+  });
+}
+
+function buildRecPlayerHtml(idx) {
+  var rec = slideRecordings[idx];
+  if (!rec) return '';
+  return '<div class="slide-rec-player">' +
+    '<audio controls src="' + rec.url + '" style="height:32px; flex:1; min-width:150px;"></audio>' +
+    '<button class="btn btn-primary btn-sm" onclick="downloadRecording(' + idx + ')">&#x1f4e5; DL</button>' +
+    '<button class="btn btn-danger btn-sm" onclick="deleteRecording(' + idx + ')">&#x1f5d1;</button>' +
+    '</div>';
+}
+
+function toggleRecording(idx, e) {
+  if (e) e.stopPropagation();
+  if (activeRecorders[idx]) {
+    stopRecording(idx);
+  } else {
+    startRecording(idx);
+  }
+}
+
+function startRecording(idx) {
+  var formatSelect = document.getElementById('recFormat');
+  var mimeType = formatSelect ? formatSelect.value : 'audio/webm';
+  if (!MediaRecorder.isTypeSupported(mimeType)) {
+    mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' :
+               MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+  }
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    var options = mimeType ? { mimeType: mimeType } : {};
+    var recorder = new MediaRecorder(stream, options);
+    var chunks = [];
+    var startTime = Date.now();
+    var timerEl = document.getElementById('recTimer-' + idx);
+    var btn = document.getElementById('recBtn-' + idx);
+    var recArea = document.getElementById('recArea-' + idx);
+
+    recorder.ondataavailable = function(e) {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    recorder.onstop = function() {
+      stream.getTracks().forEach(function(t) { t.stop(); });
+      clearInterval(activeRecorders[idx].timer);
+      var blob = new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' });
+      var url = URL.createObjectURL(blob);
+      if (slideRecordings[idx] && slideRecordings[idx].url) {
+        URL.revokeObjectURL(slideRecordings[idx].url);
+      }
+      var elapsed = Math.round((Date.now() - startTime) / 1000);
+      var mins = Math.floor(elapsed / 60);
+      var secs = elapsed % 60;
+      slideRecordings[idx] = {
+        blob: blob,
+        url: url,
+        duration: mins + ':' + (secs < 10 ? '0' : '') + secs,
+        slideNum: lectureData[idx].slide
+      };
+      btn.classList.remove('recording');
+      btn.innerHTML = '&#x1f3a4; 録音';
+      timerEl.style.display = 'none';
+      recArea.classList.add('has-recording');
+      document.getElementById('recContent-' + idx).innerHTML = buildRecPlayerHtml(idx);
+      delete activeRecorders[idx];
+    };
+
+    recorder.start(250);
+    btn.classList.add('recording');
+    btn.innerHTML = '&#x23f9; 停止';
+    timerEl.style.display = 'block';
+    recArea.classList.add('has-recording');
+
+    var timerInterval = setInterval(function() {
+      var elapsed = Math.round((Date.now() - startTime) / 1000);
+      var mins = Math.floor(elapsed / 60);
+      var secs = elapsed % 60;
+      timerEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }, 500);
+
+    activeRecorders[idx] = { recorder: recorder, stream: stream, timer: timerInterval };
+  }).catch(function(err) {
+    alert('マイクへのアクセスが許可されていません。ブラウザの設定を確認してください。\n\n' + err.message);
+  });
+}
+
+function stopRecording(idx) {
+  var rec = activeRecorders[idx];
+  if (rec && rec.recorder.state !== 'inactive') {
+    rec.recorder.stop();
+  }
+}
+
+function downloadRecording(idx) {
+  var rec = slideRecordings[idx];
+  if (!rec) return;
+  var a = document.createElement('a');
+  a.href = rec.url;
+  a.download = 'slide-' + lectureData[idx].slide + '-recording.mp3';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function deleteRecording(idx) {
+  if (!confirm('スライド' + lectureData[idx].slide + 'の録音を削除しますか？')) return;
+  if (slideRecordings[idx] && slideRecordings[idx].url) {
+    URL.revokeObjectURL(slideRecordings[idx].url);
+  }
+  delete slideRecordings[idx];
+  var recArea = document.getElementById('recArea-' + idx);
+  recArea.classList.remove('has-recording');
+  document.getElementById('recContent-' + idx).innerHTML = '';
+}
+
+function downloadAllRecordings() {
+  var keys = Object.keys(slideRecordings);
+  if (keys.length === 0) {
+    alert('録音データがありません。各スライドの録音ボタンで録音してください。');
+    return;
+  }
+  keys.forEach(function(idx) {
+    downloadRecording(parseInt(idx));
+  });
+}
+
+function generateMp3ForSlide(idx) {
+  if (!store.apiKey || !store.voiceId) {
+    alert('ElevenLabsのAPIキーとVoice IDを「声のクローン」タブで設定してください。');
+    return Promise.reject(new Error('API not configured'));
+  }
+  var text = applyFuriganaDict(lectureData[idx].text);
+  return fetch('https://api.elevenlabs.io/v1/text-to-speech/' + store.voiceId, {
+    method: 'POST',
+    headers: {
+      'Accept': 'audio/mpeg',
+      'Content-Type': 'application/json',
+      'xi-api-key': store.apiKey
+    },
+    body: JSON.stringify({
+      text: text,
+      model_id: document.getElementById('elevenModel').value,
+      voice_settings: { stability: 0.65, similarity_boost: 0.90, style: 0.0, use_speaker_boost: true },
+      language_code: 'ja'
+    })
+  }).then(function(res) {
+    if (!res.ok) throw new Error('API error: ' + res.status);
+    return res.blob();
+  });
+}
+
+function batchGenerateAll() {
+  if (!store.apiKey || !store.voiceId) {
+    alert('ElevenLabsのAPIキーとVoice IDを「声のクローン」タブで設定してください。');
+    return;
+  }
+  var progress = document.getElementById('batchProgress');
+  var progressText = document.getElementById('batchProgressText');
+  var progressFill = document.getElementById('batchProgressFill');
+  progress.style.display = 'block';
+  var total = lectureData.length;
+  var done = 0;
+
+  function processNext(i) {
+    if (i >= total) {
+      progressText.textContent = '全' + total + 'スライドのMP3生成が完了しました！';
+      progressFill.style.width = '100%';
+      return;
+    }
+    progressText.textContent = 'スライド ' + lectureData[i].slide + ' を生成中... (' + (i + 1) + '/' + total + ')';
+    progressFill.style.width = Math.round(((i) / total) * 100) + '%';
+
+    generateMp3ForSlide(i).then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      if (slideRecordings[i] && slideRecordings[i].url) URL.revokeObjectURL(slideRecordings[i].url);
+      slideRecordings[i] = { blob: blob, url: url, duration: '—', slideNum: lectureData[i].slide };
+      var recArea = document.getElementById('recArea-' + i);
+      if (recArea) {
+        recArea.classList.add('has-recording');
+        document.getElementById('recContent-' + i).innerHTML = buildRecPlayerHtml(i);
+      }
+      done++;
+      progressFill.style.width = Math.round((done / total) * 100) + '%';
+      setTimeout(function() { processNext(i + 1); }, 500);
+    }).catch(function(err) {
+      progressText.textContent = 'スライド ' + lectureData[i].slide + ' でエラー: ' + err.message;
+      setTimeout(function() { processNext(i + 1); }, 1000);
+    });
+  }
+  processNext(0);
+}
+
+function generateAndDownloadFree() {
+  var text = document.getElementById('freeText').value.trim();
+  if (!text) { alert('テキストを入力してください。'); return; }
+  if (!store.apiKey || !store.voiceId) {
+    alert('MP3保存にはElevenLabsの設定が必要です。「声のクローン」タブで設定してください。');
+    return;
+  }
+  showStatusMsg('ElevenLabsでMP3を生成中...');
+  setUi(true);
+  fetch('https://api.elevenlabs.io/v1/text-to-speech/' + store.voiceId, {
+    method: 'POST',
+    headers: {
+      'Accept': 'audio/mpeg',
+      'Content-Type': 'application/json',
+      'xi-api-key': store.apiKey
+    },
+    body: JSON.stringify({
+      text: applyFuriganaDict(text),
+      model_id: document.getElementById('elevenModel').value,
+      voice_settings: { stability: 0.65, similarity_boost: 0.90, style: 0.0, use_speaker_boost: true },
+      language_code: 'ja'
+    })
+  }).then(function(res) {
+    if (!res.ok) throw new Error('API error: ' + res.status);
+    return res.blob();
+  }).then(function(blob) {
+    var url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.onended = function() { setUi(false); };
+    currentAudio.play();
+    showStatusMsg('再生中 — 下のリンクからMP3をダウンロードできます');
+    var area = document.getElementById('freeDownloadArea');
+    area.innerHTML = '<div class="download-row">' +
+      '<span>&#x2705;</span>' +
+      '<a href="' + url + '" download="igarashi-voice-output.mp3">igarashi-voice-output.mp3 をダウンロード</a>' +
+      '</div>';
+  }).catch(function(err) {
+    setUi(false);
+    showStatusMsg('エラー: ' + err.message, 'error');
+  });
+}
+
+function playOriginal(audioSrc, e) {
+  if (e) e.stopPropagation();
+  stopSpeaking();
+  currentAudio = new Audio(audioSrc);
+  currentAudio.onended = function() { setUi(false); };
+  currentAudio.onerror = function() { setUi(false); showStatusMsg('音声ファイルの再生に失敗しました', 'error'); };
+  currentAudio.play();
+  setUi(true);
+  showStatusMsg('元の講演音声を再生中...');
+}
+
+function sendToTTS(idx, e) {
+  if (e) e.stopPropagation();
+  document.getElementById('freeText').value = lectureData[idx].text;
+  updateCharCount();
+  document.querySelectorAll('.tab').forEach(function(t) {
+    t.classList.remove('active');
+    if (t.dataset.tab === 'free') t.classList.add('active');
+  });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('panel-free').classList.add('active');
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeBtn-browser').style.border = mode === 'browser' ? '2px solid var(--primary)' : 'none';
+  document.getElementById('modeBtn-elevenlabs').style.border = mode === 'elevenlabs' ? '2px solid var(--primary)' : 'none';
+  document.getElementById('browserSettings').style.display = mode === 'browser' ? 'block' : 'none';
+  var badge = document.getElementById('modeBadge');
+  if (mode === 'elevenlabs') {
+    badge.className = 'mode-badge elevenlabs';
+    badge.textContent = 'ElevenLabs';
+    document.getElementById('modeInfo').textContent = 'ElevenLabsの声クローンを使用します。五十嵐先生ご自身の声で読み上げます。';
+  } else {
+    badge.className = 'mode-badge browser';
+    badge.textContent = 'ブラウザ音声';
+    document.getElementById('modeInfo').textContent = 'ブラウザ内蔵の音声合成を使用中です。「声のクローン」タブでElevenLabsを設定すると、ご自身の声で読み上げできるようになります。';
+  }
+}
+
+function speakText() {
+  var text = document.getElementById('freeText').value.trim();
+  if (!text) return;
+  if (currentMode === 'elevenlabs' && store.apiKey && store.voiceId) {
+    speakElevenLabs(text);
+  } else {
+    speakBrowser(text);
+  }
+}
+
+function speakBrowser(text) {
+  stopSpeaking();
+  var u = new SpeechSynthesisUtterance(text);
+  var voices = speechSynthesis.getVoices();
+  var idx = document.getElementById('voiceSelect').value;
+  if (voices[idx]) u.voice = voices[idx];
+  u.rate = parseFloat(document.getElementById('rate').value);
+  u.pitch = parseFloat(document.getElementById('pitch').value);
+  u.volume = parseFloat(document.getElementById('volume').value);
+  u.lang = 'ja-JP';
+  u.onstart = function() { setUi(true); showStatusMsg('ブラウザ音声で読み上げ中...'); };
+  u.onend = function() { setUi(false); };
+  u.onerror = function() { setUi(false); };
+  speechSynthesis.speak(u);
+}
+
+function speakElevenLabs(text) {
+  setUi(true);
+  showStatusMsg('ElevenLabsで音声を生成中...');
+  fetch('https://api.elevenlabs.io/v1/text-to-speech/' + store.voiceId, {
+    method: 'POST',
+    headers: { 'Accept': 'audio/mpeg', 'Content-Type': 'application/json', 'xi-api-key': store.apiKey },
+    body: JSON.stringify({
+      text: applyFuriganaDict(text),
+      model_id: document.getElementById('elevenModel').value,
+      voice_settings: { stability: 0.65, similarity_boost: 0.90, style: 0.0, use_speaker_boost: true },
+      language_code: 'ja'
+    })
+  }).then(function(res) {
+    if (!res.ok) return res.json().catch(function() { return {}; }).then(function(err) { throw new Error((err.detail && err.detail.message) || 'API error: ' + res.status); });
+    return res.blob();
+  }).then(function(blob) {
+    var url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.onended = function() { setUi(false); URL.revokeObjectURL(url); };
+    currentAudio.onerror = function() { setUi(false); showStatusMsg('再生エラー', 'error'); };
+    currentAudio.play();
+    showStatusMsg('五十嵐先生の声で読み上げ中...');
+  }).catch(function(err) {
+    setUi(false);
+    showStatusMsg('エラー: ' + err.message, 'error');
+  });
+}
+
+function stopSpeaking() {
+  speechSynthesis.cancel();
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+  isPaused = false;
+  setUi(false);
+}
+
+function pauseResume() {
+  if (currentAudio) {
+    if (isPaused) { currentAudio.play(); isPaused = false; document.getElementById('pauseBtn').innerHTML = '&#x23f8; 一時停止'; }
+    else { currentAudio.pause(); isPaused = true; document.getElementById('pauseBtn').innerHTML = '&#x25b6; 再開'; }
+  } else {
+    if (isPaused) { speechSynthesis.resume(); isPaused = false; document.getElementById('pauseBtn').innerHTML = '&#x23f8; 一時停止'; }
+    else { speechSynthesis.pause(); isPaused = true; document.getElementById('pauseBtn').innerHTML = '&#x25b6; 再開'; }
+  }
+}
+
+function setUi(speaking) {
+  document.getElementById('speakBtn').style.display = speaking ? 'none' : 'flex';
+  document.getElementById('stopBtn').style.display = speaking ? 'flex' : 'none';
+  document.getElementById('pauseBtn').style.display = speaking ? 'flex' : 'none';
+  if (!speaking) {
+    document.getElementById('statusBar').style.display = 'none';
+    isPaused = false;
+    document.getElementById('pauseBtn').innerHTML = '&#x23f8; 一時停止';
+  }
+}
+
+function showStatusMsg(msg, type) {
+  var bar = document.getElementById('statusBar');
+  bar.textContent = msg;
+  bar.style.display = 'flex';
+  bar.className = 'status-bar' + (type === 'error' ? ' error' : ' speaking');
+}
+
+function quickPhrase(text) {
+  document.getElementById('freeText').value = text;
+  updateCharCount();
+  speakText();
+}
+
+var furiganaDict = {
+  '口腔': 'こうくう', '歯槽膿漏': 'しそうのうろう', '歯周病': 'ししゅうびょう',
+  '咀嚼': 'そしゃく', '嚥下': 'えんげ', '咽頭': 'いんとう', '義歯': 'ぎし',
+  '齲蝕': 'うしょく', '歯肉': 'しにく', '歯垢': 'しこう', '歯石': 'しせき',
+  '補綴': 'ほてつ', '顎関節': 'がくかんせつ', '抜歯': 'ばっし', '歯髄': 'しずい',
+  '根管': 'こんかん', '食塊': 'しょっかい', '低栄養': 'ていえいよう',
+  '誤嚥': 'ごえん', '誤嚥性肺炎': 'ごえんせいはいえん', '褥瘡': 'じょくそう',
+  '疼痛': 'とうつう', '廃用': 'はいよう', '前駆症状': 'ぜんくしょうじょう',
+  '疫学': 'えきがく', '薬剤': 'やくざい', '認知症': 'にんちしょう',
+  '骨粗鬆症': 'こつそしょうしょう', '体性感覚野': 'たいせいかんかくや',
+  '運動野': 'うんどうや', '滑舌': 'かつぜつ',
+  'サルコペニア': 'サルコペニア', 'オーラルフレイル': 'オーラルフレイル',
+  'フレイル': 'フレイル', 'ロコモ': 'ロコモ',
+  '五十嵐': 'いがらし', '宇都宮': 'うつのみや', '栃木県': 'とちぎけん',
+  '健康寿命': 'けんこうじゅみょう', '平均寿命': 'へいきんじゅみょう',
+  '要介護': 'ようかいご', '虚弱': 'きょじゃく', '予備能力': 'よびのうりょく',
+  '定期検診': 'ていきけんしん', '歯科医師': 'しかいし', '歯科衛生士': 'しかえいせいし',
+  '公衆衛生': 'こうしゅうえいせい', '地域包括': 'ちいきほうかつ',
+  '喪失': 'そうしつ', '保有': 'ほゆう', '早世': 'そうせい', '呑み込み': 'のみこみ',
+  '味覚障害': 'みかくしょうがい', '口腔乾燥': 'こうくうかんそう',
+  '身体機能': 'しんたいきのう', '口腔機能': 'こうくうきのう',
+  '口腔ケア': 'こうくうケア', '抗うつ剤': 'こううつざい', '抗不安薬': 'こうふあんやく'
+};
+
+function applyFuriganaDict(text) {
+  var keys = Object.keys(furiganaDict).sort(function(a, b) { return b.length - a.length; });
+  var result = text;
+  for (var i = 0; i < keys.length; i++) {
+    result = result.split(keys[i]).join(furiganaDict[keys[i]]);
+  }
+  return result;
+}
+
+function convertToFurigana() {
+  var textarea = document.getElementById('freeText');
+  var original = textarea.value;
+  var converted = applyFuriganaDict(original);
+  if (converted !== original) {
+    textarea.value = converted;
+    updateCharCount();
+    showStatusMsg('ふりがなに変換しました（読み間違い防止）');
+    setTimeout(function() { var bar = document.getElementById('statusBar'); if (bar.textContent.indexOf('ふりがな') >= 0) bar.style.display = 'none'; }, 3000);
+  } else {
+    showStatusMsg('変換する用語が見つかりませんでした');
+    setTimeout(function() { var bar = document.getElementById('statusBar'); if (bar.textContent.indexOf('見つかりません') >= 0) bar.style.display = 'none'; }, 3000);
+  }
+}
+
+function updateCharCount() {
+  document.getElementById('charCount').textContent = document.getElementById('freeText').value.length;
+}
+
+function saveApiSettings() {
+  var key = document.getElementById('apiKey').value.trim();
+  var vid = document.getElementById('voiceId').value.trim();
+  if (!key || !vid) { showApiMsg('APIキーとVoice IDの両方を入力してください。', 'error'); return; }
+  store.apiKey = key;
+  store.voiceId = vid;
+  saveStore();
+  setMode('elevenlabs');
+  showApiMsg('設定を保存しました！自由入力タブで五十嵐先生の声をお試しください。', 'success');
+}
+
+function testElevenLabs() {
+  var key = document.getElementById('apiKey').value.trim();
+  if (!key) { showApiMsg('APIキーを入力してください。', 'error'); return; }
+  showApiMsg('接続テスト中...', 'info');
+  fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': key } })
+    .then(function(res) {
+      if (!res.ok) throw new Error('認証失敗 (' + res.status + ')');
+      return res.json();
+    })
+    .then(function(data) {
+      var vid = document.getElementById('voiceId').value.trim();
+      var msg = '接続成功！ ' + data.voices.length + '個の音声が見つかりました。';
+      if (vid) {
+        var found = data.voices.find(function(v) { return v.voice_id === vid; });
+        msg += found ? ' 「' + found.name + '」が選択されています。' : ' ※入力されたVoice IDは見つかりませんでした。';
+      } else {
+        msg += ' 利用可能なVoice ID: ' + data.voices.slice(0, 3).map(function(v) { return v.name + '=' + v.voice_id; }).join(', ');
+      }
+      showApiMsg(msg, 'success');
+    })
+    .catch(function(err) { showApiMsg('エラー: ' + err.message, 'error'); });
+}
+
+function showApiMsg(msg, type) {
+  var el = document.getElementById('apiStatus');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.background = type === 'success' ? '#e8f5f0' : type === 'error' ? '#fde8e8' : '#e8f0f5';
+  el.style.color = type === 'success' ? '#065f46' : type === 'error' ? '#b91c1c' : '#1e3a5f';
+}
+
+function toggleVis(id) {
+  var el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+</script>
+</body>
+</html>
